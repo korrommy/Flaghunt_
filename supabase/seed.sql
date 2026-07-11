@@ -20,7 +20,7 @@ insert into public.chapters (title, description, domain, order_num, icon, color_
 
 -- ----------------------------------------------------------------------------
 -- CHALLENGES
--- flag_hash = encode(digest('FlagHunt{...}', 'sha256'), 'hex')
+-- flag_hash values are precomputed SHA-256 hex and never include plaintext flags.
 -- chapter_id อ้างอิงด้วย subselect (กันลำดับ id เปลี่ยน)
 -- ----------------------------------------------------------------------------
 
@@ -30,65 +30,65 @@ values
   ((select id from public.chapters where domain = 'Steganography'),
    'Metadata Detective',
    'รูปภาพนี้ดูธรรมดา แต่ผู้ส่งอาจลืมลบข้อมูลบางอย่างที่ฝังมากับไฟล์ ลองดูใน Metadata สิ',
-   encode(extensions.digest('FlagHunt{exif_data_never_lies}', 'sha256'), 'hex'),
+   'eeef170d2ba88e46654ce757d01db8fba097edf0b030e1f098fea2a877c79a54',
    100, 'easy', 3, 1),
 
   ((select id from public.chapters where domain = 'Steganography'),
    'Whispers in the Pixels',
    'มีข้อความซ่อนอยู่ในระดับบิตต่ำสุดของแต่ละพิกเซล (LSB) ลองดึงมันออกมา',
-   encode(extensions.digest('FlagHunt{lsb_hidden_message}', 'sha256'), 'hex'),
+   '183517caeb9c4b0c77079a5dffa5b60ef4beb8d5492aa8e5a034252c9ad0eb37',
    150, 'medium', 3, 2),
 
   -- Chapter 2: Cryptography
   ((select id from public.chapters where domain = 'Cryptography'),
    'Hail Caesar',
    'ข้อความถูกเลื่อนตัวอักษรไปจำนวนหนึ่ง ลองหาค่า shift ที่ถูกต้อง',
-   encode(extensions.digest('FlagHunt{caesar_shifts_are_weak}', 'sha256'), 'hex'),
+   'ac647c356970ab4e4d561dacd956818dae978b5a169374c7a7e297967ba20a10',
    100, 'easy', 3, 1),
 
   ((select id from public.chapters where domain = 'Cryptography'),
    'Base of Operations',
    'ข้อความหน้าตาแปลกๆ ลงท้ายด้วย == บ่อยครั้งหมายถึงการเข้ารหัสแบบหนึ่ง',
-   encode(extensions.digest('FlagHunt{base64_is_not_encryption}', 'sha256'), 'hex'),
+   'e83f90ee600acb195fa944d6eeda591d7a3328c520d9097417cf5b4cec66641f',
    100, 'easy', 3, 2),
 
   ((select id from public.chapters where domain = 'Cryptography'),
    'XOR Marks the Spot',
    'ไฟล์ถูก XOR ด้วยคีย์ขนาด 1 ไบต์ ลองทุกความเป็นไปได้เพื่อหาข้อความที่อ่านได้',
-   encode(extensions.digest('FlagHunt{xor_single_byte_key}', 'sha256'), 'hex'),
+   '37108660ccb39ca0cb6707f42c37c58c37e9c7b47717d964126ee8cb88a670ca',
    150, 'medium', 3, 3),
 
   -- Chapter 3: Web Security
   ((select id from public.chapters where domain = 'Web Security'),
    'View Source, Luke',
    'คำตอบอาจซ่อนอยู่ในคอมเมนต์ของ HTML ลองเปิดดู Source ของหน้าเว็บ',
-   encode(extensions.digest('FlagHunt{check_the_html_comments}', 'sha256'), 'hex'),
+   '931f403ca6823e8ca3079ad7bcc6cd6bea8daba82c9249288c5c5806d2c5cc62',
    100, 'easy', 3, 1),
 
   ((select id from public.chapters where domain = 'Web Security'),
    'Robots Welcome',
    'เว็บมักบอกบอทว่าห้ามเข้าหน้าไหน ไฟล์นั้นอาจชี้ทางไปยังที่ลับ',
-   encode(extensions.digest('FlagHunt{robots_txt_reveals_paths}', 'sha256'), 'hex'),
+   '6c57f9355b0c3bf7243f70168e1540507c24b1776e917253b70b4b020fbbcc9a',
    100, 'easy', 3, 2),
 
   ((select id from public.chapters where domain = 'Web Security'),
    'Command & Conquer',
    'แอปกรอง input แต่ยังไม่รัดกุมพอ มีทางลัดให้ inject คำสั่ง OS เพื่ออ่าน flag',
-   encode(extensions.digest('FlagHunt{command_injection_pwned}', 'sha256'), 'hex'),
+   '736a1d47438fae95f5c63b9ba8824531aaaca3ed50c2820a20b214736f60ad8e',
    200, 'hard', 3, 3),
 
   -- Chapter 4: OSINT
   ((select id from public.chapters where domain = 'OSINT'),
    'Digital Footprint',
    'เป้าหมายใช้ชื่อผู้ใช้เดียวกันในหลายแพลตฟอร์ม ตามรอยจนเจอข้อมูลที่หลุดออกมา',
-   encode(extensions.digest('FlagHunt{osint_username_pivot}', 'sha256'), 'hex'),
+   '21a9be089e97d7196798ed1b634a376d62f2881aad57829cdeb11aef32ca1686',
    150, 'medium', 3, 1),
 
   -- Chapter 5: Log Analysis
   ((select id from public.chapters where domain = 'Log Analysis'),
    'Needle in the Logstack',
    'Access log เต็มไปด้วย request ปกติ แต่มีร่องรอยการเดารหัสผ่านซ่อนอยู่',
-   encode(extensions.digest('FlagHunt{brute_force_in_access_log}', 'sha256'), 'hex'),
+   '2c271da599d7978164ee1c0fad4b271d3584163b0423b40a49d4e55accb312f1',
    150, 'medium', 3, 1);
 
 -- ----------------------------------------------------------------------------

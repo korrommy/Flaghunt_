@@ -2,6 +2,32 @@
 -- The transaction rolls back the test user and all progress changes.
 begin;
 
+-- The Auth signup trigger is SECURITY INVOKER. This test runs the exact
+-- auth-admin role through auth.users so the username de-duplication SELECT
+-- and profile INSERT both execute under the production trigger boundary.
+do $$
+declare
+  signup_user_id uuid := gen_random_uuid();
+begin
+  execute 'set local role supabase_auth_admin';
+  insert into auth.users (
+    instance_id, id, aud, role, email, encrypted_password, email_confirmed_at,
+    raw_app_meta_data, raw_user_meta_data, created_at, updated_at,
+    confirmation_token, recovery_token, email_change_token_new, email_change
+  ) values (
+    '00000000-0000-0000-0000-000000000000', signup_user_id, 'authenticated',
+    'authenticated', 'signup-trigger-test-' || signup_user_id::text || '@example.invalid',
+    'not-used-by-this-test', now(), '{"provider":"email","providers":["email"]}',
+    '{}', now(), now(), '', '', '', ''
+  );
+  execute 'set local role none';
+
+  if not exists (select 1 from public.profiles where id = signup_user_id) then
+    raise exception 'Assertion failed: Auth signup did not create a profile';
+  end if;
+end;
+$$;
+
 do $$
 declare
   test_user_id uuid := gen_random_uuid();
@@ -76,10 +102,32 @@ begin
   if has_table_privilege('authenticated', 'public.challenges', 'select') then
     raise exception 'Assertion failed: challenges table-level SELECT is granted';
   end if;
+  if has_column_privilege('authenticated', 'public.challenges', 'id', 'select') then
+    raise exception 'Assertion failed: challenges column SELECT is granted';
+  end if;
   if has_column_privilege('authenticated', 'public.challenges', 'flag_hash', 'select') then
     raise exception 'Assertion failed: flag_hash column is selectable';
   end if;
+  if not has_column_privilege('supabase_auth_admin', 'public.profiles', 'username', 'select') then
+    raise exception 'Assertion failed: Auth role cannot read usernames for signup';
+  end if;
 end;
 $$;
+
+set local role authenticated;
+
+do $$
+begin
+  perform id from public.challenges limit 1;
+  raise exception 'Assertion failed: direct base-table challenge SELECT succeeded';
+exception
+  when insufficient_privilege then null;
+end;
+$$;
+
+-- The browser can still read the intentionally safe projection.
+select count(*) from public.challenges_public;
+
+set local role none;
 
 rollback;
