@@ -1,8 +1,13 @@
-// TODO (ส่วนที่ 2/9): Landing Page — Hero, Stats, Choose Your Path, How It Works, Auth, Activity Feed
+import { HeroConsole } from "@/components/landing/HeroConsole";
+import { LandingNav } from "@/components/landing/LandingNav";
+import { LearningPathPreview } from "@/components/landing/LearningPathPreview";
+
 export default function LandingPage() {
   return (
-    <main className="flex min-h-screen items-center justify-center">
-      <h1 className="font-mono text-2xl text-neon">FlagHunt</h1>
+    <main className="min-h-screen bg-[#0a0a0a]">
+      <LandingNav />
+      <HeroConsole />
+      <LearningPathPreview />
     </main>
   );
 }

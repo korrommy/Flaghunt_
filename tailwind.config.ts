@@ -23,6 +23,10 @@ const config: Config = {
         },
         border: "#1f1f1f",
         card: "#111111",
+        gold: {
+          DEFAULT: "#d4a84b",
+          light: "#e8c56e",
+        },
       },
       fontFamily: {
         mono: ["var(--font-jetbrains-mono)", "monospace"],

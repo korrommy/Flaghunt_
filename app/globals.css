@@ -22,5 +22,4 @@
 
 @layer components {
   .command-panel { box-shadow: inset -1px 0 0 rgba(212, 168, 75, 0.45), 0 12px 35px rgba(0, 0, 0, 0.24); }
-  .amber-spotlight { background: linear-gradient(90deg, transparent 72%, rgba(212, 168, 75, 0.12)); }
 }
