@@ -1,5 +1,6 @@
 "use client";
 
+import "@xterm/xterm/css/xterm.css";
 import { useEffect, useRef } from "react";
 import type { TerminalScript } from "@/lib/types";
 import { executeTerminalCommand } from "@/lib/terminal-scripts";
