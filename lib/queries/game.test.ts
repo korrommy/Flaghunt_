@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   buildDashboardView,
   buildLeaderboardView,
+  buildLeaderboardPage,
   buildProfileView,
   type GameQueryData,
 } from "@/lib/queries/game";
@@ -50,6 +51,28 @@ describe("game view mapping", () => {
 
     expect(leaderboard.map((entry) => entry.username)).toEqual(["early", "late"]);
     expect(leaderboard.map((entry) => entry.rank)).toEqual([1, 2]);
+  });
+
+  it("keeps the UTC daily challenge stable after the learner solves it", () => {
+    const today = new Date("2026-07-11T12:00:00Z");
+    const beforeSolve = buildDashboardView(baseData, today);
+    const afterSolve = buildDashboardView({
+      ...baseData,
+      progress: [{ id: 1, user_id: "user-1", challenge_id: beforeSolve.dailyChallenge?.id ?? 0, is_solved: true, hints_used: 0, attempts: 1, solved_at: "2026-07-11T12:01:00Z" }],
+    }, today);
+
+    expect(afterSolve.dailyChallenge?.id).toBe(beforeSolve.dailyChallenge?.id);
+  });
+
+  it("keeps a ranked learner below the requested leaderboard page", () => {
+    const currentProfile = { id: "learner", username: "learner", display_name: "Learner", total_xp: 0, level: 1, created_at: "2026-01-01T00:00:00Z" };
+    const page = buildLeaderboardPage(
+      [{ rank: 1, username: "top", display_name: "Top", total_xp: 10_000, level: 10 }],
+      currentProfile,
+      100,
+    );
+
+    expect(page.currentUser).toMatchObject({ username: "learner", rank: 101 });
   });
 
   it("returns a locked badge for badges not earned by the learner", () => {
