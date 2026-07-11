@@ -18,4 +18,20 @@ describe("terminal scripts", () => {
       lines: ["EXIF: ตรวจสอบช่อง Comment และ Artist ของไฟล์ตัวอย่าง"],
     });
   });
+
+  it("treats inherited file names as missing files", () => {
+    const script = getTerminalScript(1);
+    const missingFile = executeTerminalCommand(script, "cat missing.txt");
+
+    expect(executeTerminalCommand(script, "cat toString")).toEqual(missingFile);
+    expect(executeTerminalCommand(script, "cat constructor")).toEqual(missingFile);
+  });
+
+  it("treats inherited command names as harmless unknown commands", () => {
+    const script = getTerminalScript(1);
+    const unknownCommand = executeTerminalCommand(script, "not-a-command");
+
+    expect(executeTerminalCommand(script, "toString")).toEqual(unknownCommand);
+    expect(executeTerminalCommand(script, "constructor")).toEqual(unknownCommand);
+  });
 });

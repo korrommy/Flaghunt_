@@ -8,11 +8,11 @@ export interface TerminalOutput {
 const defaultScript: TerminalScript = {
   challengeId: 0,
   welcomeMessage: ["FlagHunt Safe Terminal", "พิมพ์ help เพื่อดูคำสั่งที่ใช้ได้"],
-  files: {},
-  commands: {},
+  files: Object.create(null) as Record<string, string>,
+  commands: Object.create(null) as Record<string, string | string[]>,
 };
 
-const terminalScripts: Record<number, TerminalScript> = {
+const terminalScripts: Record<number, TerminalScript> = Object.assign(Object.create(null) as Record<number, TerminalScript>, {
   1: {
     challengeId: 1,
     welcomeMessage: ["[Metadata Detective]", "พิมพ์ ls แล้วใช้ cat กับไฟล์ตัวอย่าง"],
@@ -28,9 +28,12 @@ const terminalScripts: Record<number, TerminalScript> = {
   8: { challengeId: 8, welcomeMessage: ["[Command & Conquer]"], files: { "review.txt": "วิเคราะห์ input handling โดยไม่รันคำสั่งจริง" }, commands: { inspect: "มองหาจุดที่ input ถูกนำไปประกอบคำสั่งโดยไม่มีการตรวจสอบ" } },
   9: { challengeId: 9, welcomeMessage: ["[Digital Footprint]"], files: { "profile.txt": "ติดตามข้อมูลสาธารณะอย่างรับผิดชอบ" }, commands: { osint: "เริ่มจาก username ที่ซ้ำกันในหลายแหล่งข้อมูลสาธารณะ" } },
   10: { challengeId: 10, welcomeMessage: ["[Needle in the Logstack]"], files: { "access.log": "ค้นหาค่า status และ path ที่ผิดปกติ" }, commands: { analyze: "กรอง request ที่ผิดปกติแล้วเปรียบเทียบกับพฤติกรรมปกติ" } },
-};
+});
 
-export const getTerminalScript = (challengeId: number): TerminalScript => terminalScripts[challengeId] ?? defaultScript;
+const hasOwnKey = (record: object, key: string): boolean => Object.prototype.hasOwnProperty.call(record, key);
+
+export const getTerminalScript = (challengeId: number): TerminalScript =>
+  hasOwnKey(terminalScripts, String(challengeId)) ? terminalScripts[challengeId] : defaultScript;
 
 const helpLines = (script: TerminalScript): string[] => [
   "คำสั่งที่ใช้ได้: help, clear, ls, cat <filename>",
@@ -44,10 +47,10 @@ export const executeTerminalCommand = (script: TerminalScript, entered: string):
   if (command === "ls") return { type: "output", lines: Object.keys(script.files).length ? Object.keys(script.files) : ["ไม่มีไฟล์สำหรับโจทย์นี้"] };
   if (command.startsWith("cat ")) {
     const filename = command.slice(4).trim();
-    const file = script.files[filename];
+    const file = hasOwnKey(script.files, filename) ? script.files[filename] : undefined;
     return file ? { type: "output", lines: file.split("\n") } : { type: "output", lines: ["ไม่พบไฟล์นี้ ใช้ ls เพื่อดูรายการไฟล์"] };
   }
-  const output = script.commands[command];
+  const output = hasOwnKey(script.commands, command) ? script.commands[command] : undefined;
   if (output) return { type: "output", lines: Array.isArray(output) ? output : [output] };
   return { type: "output", lines: ["ไม่รองรับคำสั่งนี้ ใช้ help เพื่อดูคำสั่งที่ปลอดภัย"] };
 };
