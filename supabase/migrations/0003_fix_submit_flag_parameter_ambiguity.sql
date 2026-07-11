@@ -1,5 +1,9 @@
--- Atomic flag submission. This is the only SECURITY DEFINER function in the
--- schema because it must read the server-only hash and update progression.
+-- Replace the deployed 0002 function. Prefixing inputs prevents collisions
+-- with public.user_progress columns inside the INSERT ... ON CONFLICT clause.
+-- PostgreSQL does not permit CREATE OR REPLACE to rename input arguments, so
+-- replace this isolated RPC in one transactional migration before recreating it.
+drop function if exists public.submit_flag(integer, text);
+
 create or replace function public.submit_flag(
   p_challenge_id integer,
   p_submitted_flag_hash text

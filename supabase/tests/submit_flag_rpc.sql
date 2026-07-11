@@ -63,6 +63,10 @@ $$;
 
 do $$
 begin
+  if pg_get_function_arguments('public.submit_flag(integer, text)'::regprocedure)
+    not like '%p_challenge_id integer%' then
+    raise exception 'Assertion failed: submit_flag inputs are not prefixed';
+  end if;
   if has_function_privilege('anon', 'public.submit_flag(integer, text)', 'execute') then
     raise exception 'Assertion failed: anon can execute submit_flag';
   end if;
