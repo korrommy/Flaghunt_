@@ -84,8 +84,8 @@ create index if not exists idx_profiles_total_xp on public.profiles(total_xp des
 create or replace function public.handle_new_user()
 returns trigger
 language plpgsql
-security definer
-set search_path = public
+security invoker
+set search_path = public, extensions
 as $$
 declare
   base_username text;
@@ -128,49 +128,50 @@ alter table public.user_badges   enable row level security;
 --           แก้ไข/เพิ่มได้เฉพาะแถวของตัวเอง
 create policy "profiles_select_all"
   on public.profiles for select
+  to anon, authenticated
   using (true);
 
-create policy "profiles_update_own"
-  on public.profiles for update
-  using (auth.uid() = id)
-  with check (auth.uid() = id);
+-- The Auth service inserts auth.users and fires handle_new_user. Granting its
+-- internal database role this narrowly scoped insert keeps the trigger invoker.
+create policy "auth_admin_create_profile"
+  on public.profiles for insert
+  to supabase_auth_admin
+  with check (true);
+
 
 -- chapters: เนื้อหาสาธารณะ อ่านได้ทุกคน
 create policy "chapters_select_all"
   on public.chapters for select
+  to anon, authenticated
   using (true);
 
 -- badges: รายการ badge สาธารณะ อ่านได้ทุกคน
 create policy "badges_select_all"
   on public.badges for select
+  to anon, authenticated
   using (true);
 
--- challenges: ไม่มี policy select → client อ่าน base table ไม่ได้เลย (กัน flag_hash รั่ว)
---             ให้ client อ่านผ่าน view challenges_public แทน
---             การเทียบ flag ทำฝั่ง server ด้วย service role key เท่านั้น
+-- challenges: safe content is read through challenges_public; the hash remains
+-- server-only and is compared inside the submit_flag RPC.
+
+-- challenges: clients can only query explicitly granted safe columns; flag_hash
+-- has neither a table-level nor column-level SELECT grant.
+create policy "challenges_select_safe_projection"
+  on public.challenges for select
+  to anon, authenticated
+  using (true);
 
 -- user_progress: เห็น/แก้ไขเฉพาะของตัวเอง
 create policy "user_progress_select_own"
   on public.user_progress for select
-  using (auth.uid() = user_id);
-
-create policy "user_progress_insert_own"
-  on public.user_progress for insert
-  with check (auth.uid() = user_id);
-
-create policy "user_progress_update_own"
-  on public.user_progress for update
-  using (auth.uid() = user_id)
-  with check (auth.uid() = user_id);
+  to authenticated
+  using ((select auth.uid()) = user_id);
 
 -- user_badges: เห็น/รับเฉพาะของตัวเอง
 create policy "user_badges_select_own"
   on public.user_badges for select
-  using (auth.uid() = user_id);
-
-create policy "user_badges_insert_own"
-  on public.user_badges for insert
-  with check (auth.uid() = user_id);
+  to authenticated
+  using ((select auth.uid()) = user_id);
 
 -- ----------------------------------------------------------------------------
 -- PUBLIC VIEW — challenges ที่ปลอดภัย (ไม่มี flag_hash)
@@ -184,8 +185,19 @@ create or replace view public.challenges_public as
 
 -- ให้ view เคารพ RLS ของผู้เรียก; base table ไม่มี select policy
 -- จึงต้อง grant select บน view ให้ผู้ใช้อ่านคอลัมน์ที่ปลอดภัยได้
-alter view public.challenges_public set (security_invoker = false);
+alter view public.challenges_public set (security_invoker = true);
 grant select on public.challenges_public to anon, authenticated;
 
 -- ปิด access โดยตรงต่อ base table สำหรับ client roles (กันรั่วซ้ำอีกชั้น)
+-- Explicit grants avoid depending on project defaults. Progress mutations are
+-- exclusively performed by submit_flag, not by browser clients.
+revoke all on public.profiles, public.chapters, public.challenges,
+  public.user_progress, public.badges, public.user_badges
+  from anon, authenticated;
+grant select on public.profiles, public.chapters, public.badges to anon, authenticated;
+grant select on public.user_progress, public.user_badges to authenticated;
+grant insert on public.profiles to supabase_auth_admin;
+grant select (id, chapter_id, title, description, xp_reward, difficulty, max_hints, file_url, order_num)
+  on public.challenges to anon, authenticated;
 revoke select on public.challenges from anon, authenticated;
+revoke execute on function public.handle_new_user() from public, anon, authenticated;
