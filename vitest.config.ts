@@ -12,6 +12,7 @@ export default defineConfig({
     },
   },
   test: {
+    cache: false,
     environment: "node",
   },
 });

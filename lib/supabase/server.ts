@@ -1,4 +1,7 @@
-import { createServerClient as createSupabaseServerClient } from "@supabase/ssr";
+import {
+  createServerClient as createSupabaseServerClient,
+  type SetAllCookies,
+} from "@supabase/ssr";
 import { cookies } from "next/headers";
 
 const getPublicSupabaseConfig = (): { url: string; publishableKey: string } => {
@@ -14,7 +17,7 @@ export const createServerClient = async () => {
   return createSupabaseServerClient(url, publishableKey, {
     cookies: {
       getAll: () => cookieStore.getAll(),
-      setAll: (cookiesToSet) => {
+      setAll: (cookiesToSet: Parameters<SetAllCookies>[0]) => {
         try { cookiesToSet.forEach(({ name, value, options }) => cookieStore.set(name, value, options)); }
         catch { /* Middleware refreshes sessions when server components cannot write cookies. */ }
       },

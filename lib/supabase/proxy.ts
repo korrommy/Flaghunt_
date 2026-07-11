@@ -1,4 +1,4 @@
-import { createServerClient } from "@supabase/ssr";
+import { createServerClient, type SetAllCookies } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 const protectedPaths = ["/dashboard", "/challenge", "/leaderboard", "/profile"];
@@ -19,7 +19,7 @@ export const updateSession = async (request: NextRequest): Promise<NextResponse>
   const supabase = createServerClient(url, publishableKey, {
     cookies: {
       getAll: () => request.cookies.getAll(),
-      setAll: (cookiesToSet) => {
+      setAll: (cookiesToSet: Parameters<SetAllCookies>[0]) => {
         cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
         response = NextResponse.next({ request });
         cookiesToSet.forEach(({ name, value, options }) => response.cookies.set(name, value, options));
@@ -27,8 +27,8 @@ export const updateSession = async (request: NextRequest): Promise<NextResponse>
     },
   });
 
-  const { data: { claims } } = await supabase.auth.getClaims();
-  if (claims?.sub || !isProtectedPath(request.nextUrl.pathname)) return response;
+  const { data: claimData } = await supabase.auth.getClaims();
+  if (claimData?.claims.sub || !isProtectedPath(request.nextUrl.pathname)) return response;
 
   const loginUrl = request.nextUrl.clone();
   loginUrl.pathname = "/login";
