@@ -3,7 +3,7 @@ import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { createServerClient } from "@/lib/supabase/server";
-import type { Badge, SubmitFlagResult } from "@/lib/types";
+import type { EarnedBadge, SubmitFlagResult } from "@/lib/types";
 import { submitFlagSchema } from "@/lib/validations";
 
 interface SubmitFlagRpcRow {
@@ -12,7 +12,7 @@ interface SubmitFlagRpcRow {
   xp_earned: number;
   new_total_xp: number;
   new_level: number;
-  newly_earned_badges: Badge[] | null;
+  newly_earned_badges: EarnedBadge[] | null;
 }
 
 const rpcRowSchema = z.object({
@@ -23,11 +23,9 @@ const rpcRowSchema = z.object({
   new_level: z.number().int().positive(),
   newly_earned_badges: z.array(z.object({
     id: z.number().int().positive(),
-    chapter_id: z.number().int().positive().nullable(),
     name: z.string(),
     description: z.string(),
     icon: z.string(),
-    required_level: z.number().int().positive(),
   })).nullable(),
 });
 

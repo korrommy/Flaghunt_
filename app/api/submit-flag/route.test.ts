@@ -60,12 +60,12 @@ describe("POST /api/submit-flag", () => {
     expect(mocks.rpc).toHaveBeenCalledWith("submit_flag", expect.objectContaining({ p_challenge_id: 1, p_submitted_flag_hash: expect.stringMatching(/^[a-f0-9]{64}$/) }));
   });
 
-  it("returns the first correct solve and invalidates game views", async () => {
+  it("returns a four-field earned badge for the first correct solve and invalidates game views", async () => {
     mocks.getClaims.mockResolvedValue({ data: { claims: { sub: "user-1" } }, error: null });
-    mocks.rpc.mockResolvedValue({ data: [{ correct: true, already_solved: false, xp_earned: 100, new_total_xp: 110, new_level: 2, newly_earned_badges: [{ id: 1, chapter_id: 1, name: "First", description: "First solve", icon: "*", required_level: 1 }] }], error: null });
+    mocks.rpc.mockResolvedValue({ data: [{ correct: true, already_solved: false, xp_earned: 100, new_total_xp: 110, new_level: 2, newly_earned_badges: [{ id: 1, name: "First", description: "First solve", icon: "*" }] }], error: null });
     const response = await POST(request(JSON.stringify({ challenge_id: 1, flag: "correct answer" })));
     expect(response.status).toBe(200);
-    await expect(response.json()).resolves.toEqual({ success: true, data: { correct: true, xp_earned: 100, total_xp: 110, level: 2, badge: { id: 1, chapter_id: 1, name: "First", description: "First solve", icon: "*", required_level: 1 }, message: "ยินดีด้วย! คุณแก้โจทย์สำเร็จ 🎉" } });
+    await expect(response.json()).resolves.toEqual({ success: true, data: { correct: true, xp_earned: 100, total_xp: 110, level: 2, badge: { id: 1, name: "First", description: "First solve", icon: "*" }, message: "ยินดีด้วย! คุณแก้โจทย์สำเร็จ 🎉" } });
     expect(mocks.revalidatePath).toHaveBeenCalledWith("/dashboard");
     expect(mocks.revalidatePath).toHaveBeenCalledWith("/challenge/1");
     expect(mocks.revalidatePath).toHaveBeenCalledWith("/leaderboard");
