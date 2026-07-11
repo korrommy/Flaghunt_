@@ -15,3 +15,6 @@ export const getSafeNextPath = (next: string | null): string => {
 
 export const getLoginRedirectPath = (next: string | null): string =>
   `/login?next=${encodeURIComponent(getSafeNextPath(next))}`;
+
+export const getRegisterRedirectPath = (next: string | null): string =>
+  `/register?next=${encodeURIComponent(getSafeNextPath(next))}`;

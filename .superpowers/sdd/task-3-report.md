@@ -25,7 +25,13 @@
 - Preserved the validated destination during email-confirmation registration redirects with `/login?next=...`.
 - Added focused coverage for an internal path, an external URL, a backslash-based protocol-relative URL, and the confirmation login redirect.
 
-### Verification
+### P2 follow-up: auth cross-link redirect preservation
 
-- `npm test -- lib/auth/safe-next.test.ts` — passed: 4 tests.
-- `npx tsc --noEmit --incremental false` — passed.
+- Login-to-register and register-to-login links now carry the validated internal `next` destination via shared safe redirect helpers.
+- Unsafe values still resolve to `/dashboard` before they are encoded into either link.
+- Added focused coverage for a challenge destination with query parameters and an external URL fallback.
+
+### Follow-up verification
+
+- `npm test -- lib/auth/safe-next.test.ts` â€” passed: 1 file, 5 tests.
+- `npx tsc --noEmit --incremental false` â€” passed.
