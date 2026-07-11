@@ -162,6 +162,11 @@ create policy "badges_select_all"
 -- challenges: clients can only query explicitly granted safe columns; flag_hash
 -- has neither a table-level nor column-level SELECT grant.
 -- user_progress: เห็น/แก้ไขเฉพาะของตัวเอง
+create policy "challenges_select_safe_projection"
+  on public.challenges for select
+  to anon, authenticated
+  using (true);
+
 create policy "user_progress_select_own"
   on public.user_progress for select
   to authenticated
@@ -186,7 +191,7 @@ with (security_barrier = true) as
 
 -- ให้ view เคารพ RLS ของผู้เรียก; base table ไม่มี select policy
 -- จึงต้อง grant select บน view ให้ผู้ใช้อ่านคอลัมน์ที่ปลอดภัยได้
-alter view public.challenges_public set (security_invoker = false);
+alter view public.challenges_public set (security_invoker = true);
 grant select on public.challenges_public to anon, authenticated;
 
 -- ปิด access โดยตรงต่อ base table สำหรับ client roles (กันรั่วซ้ำอีกชั้น)
@@ -200,4 +205,6 @@ grant select on public.user_progress, public.user_badges to authenticated;
 grant insert on public.profiles to supabase_auth_admin;
 grant select (username) on public.profiles to supabase_auth_admin;
 revoke select on public.challenges from anon, authenticated;
+grant select (id, chapter_id, title, description, xp_reward, difficulty,
+  max_hints, file_url, order_num) on public.challenges to anon, authenticated;
 revoke execute on function public.handle_new_user() from public, anon, authenticated;

@@ -2,28 +2,27 @@
 -- The transaction rolls back the test user and all progress changes.
 begin;
 
--- The Auth signup trigger is SECURITY INVOKER. This test runs the exact
--- auth-admin role through auth.users so the username de-duplication SELECT
--- and profile INSERT both execute under the production trigger boundary.
+-- The Management API test runner cannot SET LOCAL ROLE supabase_auth_admin.
+-- Verify the production role's grants and RLS policies here; exercise the
+-- auth.users trigger through a deployed Auth signup integration test.
 do $$
-declare
-  signup_user_id uuid := gen_random_uuid();
 begin
-  execute 'set local role supabase_auth_admin';
-  insert into auth.users (
-    instance_id, id, aud, role, email, encrypted_password, email_confirmed_at,
-    raw_app_meta_data, raw_user_meta_data, created_at, updated_at,
-    confirmation_token, recovery_token, email_change_token_new, email_change
-  ) values (
-    '00000000-0000-0000-0000-000000000000', signup_user_id, 'authenticated',
-    'authenticated', 'signup-trigger-test-' || signup_user_id::text || '@example.invalid',
-    'not-used-by-this-test', now(), '{"provider":"email","providers":["email"]}',
-    '{}', now(), now(), '', '', '', ''
-  );
-  execute 'set local role none';
-
-  if not exists (select 1 from public.profiles where id = signup_user_id) then
-    raise exception 'Assertion failed: Auth signup did not create a profile';
+  if (select prosecdef from pg_proc where oid = 'public.handle_new_user()'::regprocedure) then
+    raise exception 'Assertion failed: handle_new_user must be SECURITY INVOKER';
+  end if;
+  if not has_table_privilege('supabase_auth_admin', 'public.profiles', 'insert') then
+    raise exception 'Assertion failed: Auth role cannot insert signup profiles';
+  end if;
+  if not has_column_privilege('supabase_auth_admin', 'public.profiles', 'username', 'select') then
+    raise exception 'Assertion failed: Auth role cannot read usernames for signup';
+  end if;
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'profiles'
+      and policyname = 'auth_admin_create_profile' and cmd = 'INSERT'
+      and roles @> array['supabase_auth_admin']::name[]
+  ) then
+    raise exception 'Assertion failed: Auth profile INSERT RLS policy is missing';
   end if;
 end;
 $$;
@@ -99,27 +98,36 @@ begin
   if not has_function_privilege('authenticated', 'public.submit_flag(integer, text)', 'execute') then
     raise exception 'Assertion failed: authenticated cannot execute submit_flag';
   end if;
-  if has_table_privilege('authenticated', 'public.challenges', 'select') then
-    raise exception 'Assertion failed: challenges table-level SELECT is granted';
-  end if;
-  if has_column_privilege('authenticated', 'public.challenges', 'id', 'select') then
-    raise exception 'Assertion failed: challenges column SELECT is granted';
+  if not has_column_privilege('authenticated', 'public.challenges', 'id', 'select') then
+    raise exception 'Assertion failed: safe challenge columns are not selectable';
   end if;
   if has_column_privilege('authenticated', 'public.challenges', 'flag_hash', 'select') then
     raise exception 'Assertion failed: flag_hash column is selectable';
   end if;
-  if not has_column_privilege('supabase_auth_admin', 'public.profiles', 'username', 'select') then
-    raise exception 'Assertion failed: Auth role cannot read usernames for signup';
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'challenges'
+      and policyname = 'challenges_select_safe_projection' and cmd = 'SELECT'
+  ) then
+    raise exception 'Assertion failed: challenges safe-read RLS policy is missing';
+  end if;
+  if not coalesce((select reloptions @> array['security_invoker=true']
+    from pg_class where oid = 'public.challenges_public'::regclass), false) then
+    raise exception 'Assertion failed: challenges_public must be SECURITY INVOKER';
   end if;
 end;
 $$;
 
 set local role authenticated;
 
+-- SECURITY INVOKER requires a safe base-table projection. flag_hash remains
+-- inaccessible to browser roles.
+select id from public.challenges limit 1;
+
 do $$
 begin
-  perform id from public.challenges limit 1;
-  raise exception 'Assertion failed: direct base-table challenge SELECT succeeded';
+  execute 'select flag_hash from public.challenges limit 1';
+  raise exception 'Assertion failed: flag_hash SELECT succeeded';
 exception
   when insufficient_privilege then null;
 end;
