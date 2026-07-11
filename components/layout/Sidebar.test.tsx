@@ -19,6 +19,21 @@ describe("Sidebar", () => {
   it("exposes an accessible mobile-menu control", () => {
     const markup = renderToStaticMarkup(<Sidebar />);
 
+    expect(markup).toContain('aria-controls="mobile-navigation"');
+    expect(markup).toContain('aria-expanded="false"');
+  });
+
+  it("keeps the closed mobile drawer out of keyboard and assistive-tech navigation", () => {
+    const markup = renderToStaticMarkup(<Sidebar />);
+
+    expect(markup).toContain('id="mobile-navigation"');
+    expect(markup).toContain('aria-hidden="true"');
+    expect(markup).toContain('tabindex="-1"');
+  });
+
+  it("keeps the mobile-menu control labelled", () => {
+    const markup = renderToStaticMarkup(<Sidebar />);
+
     expect(markup).toContain('aria-label="เปิดเมนูนำทาง"');
   });
 });

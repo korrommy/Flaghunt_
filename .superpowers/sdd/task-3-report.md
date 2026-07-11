@@ -35,3 +35,15 @@
 
 - `npm test -- lib/auth/safe-next.test.ts` â€” passed: 1 file, 5 tests.
 - `npx tsc --noEmit --incremental false` â€” passed.
+
+### P2 follow-up: closed mobile navigation accessibility
+
+- Split the desktop sidebar from the mobile drawer so the desktop navigation remains available at `md` widths.
+- The closed mobile drawer now uses `aria-hidden` and removes every child link/button from the tab order; the trigger exposes `aria-controls` and `aria-expanded`.
+- Added focused render coverage for the closed drawer and its mobile-menu trigger state.
+
+### Follow-up verification
+
+- `npm test -- components/layout/Sidebar.test.tsx` — passed: 1 file, 4 tests.
+- `npx tsc --noEmit --incremental false` — passed.
+- `npm test` — passed: 5 files, 16 tests.
