@@ -1,7 +1,7 @@
 import { createServerClient, type SetAllCookies } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-const protectedPaths = ["/dashboard", "/challenge", "/leaderboard", "/profile"];
+const protectedPaths = ["/dashboard", "/chapter", "/challenge", "/leaderboard", "/profile"];
 
 const isProtectedPath = (pathname: string): boolean =>
   protectedPaths.some((path) => pathname === path || pathname.startsWith(`${path}/`));
