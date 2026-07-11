@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
+import { Toaster } from "sonner";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const jetbrainsMono = JetBrains_Mono({
@@ -21,6 +22,7 @@ export default function RootLayout({
     <html lang="th" className="dark">
       <body className={`${inter.variable} ${jetbrainsMono.variable}`}>
         {children}
+        <Toaster richColors position="top-right" />
       </body>
     </html>
   );
