@@ -18,3 +18,14 @@
 
 - `components/layout/Sidebar.test.tsx`: selected navigation and accessible mobile-menu control.
 - `app/auth/signout/route.test.ts`: claims-verified sign-out, layout revalidation, and login redirect.
+
+## Review follow-up
+
+- Replaced duplicated auth-page redirect checks with `lib/auth/safe-next.ts`, which accepts only same-origin internal paths and rejects backslashes.
+- Preserved the validated destination during email-confirmation registration redirects with `/login?next=...`.
+- Added focused coverage for an internal path, an external URL, a backslash-based protocol-relative URL, and the confirmation login redirect.
+
+### Verification
+
+- `npm test -- lib/auth/safe-next.test.ts` — passed: 4 tests.
+- `npx tsc --noEmit --incremental false` — passed.
