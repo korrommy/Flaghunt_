@@ -1,11 +1,11 @@
 # FlagHunt visual fidelity ledger
 
-Date: 2026-07-11 (Asia/Bangkok)  
+Date: 2026-07-12 (Asia/Bangkok)
 Reference: `docs/superpowers/specs/2026-07-11-flaghunt-full-stack-design.md`.
 
 ## Evidence limitations
 
-The required desktop and 390px captures for Landing, Dashboard, Challenge, Leaderboard, Profile, Login, and Register are not attached because browser QA could not start: the local server accepted startup but did not respond to a 15-second HTTP header request, and the `agent-browser` executable was unavailable. The comparisons below are a source-to-concept review, not a rendered visual sign-off.
+The required desktop and 390px captures for Landing, Dashboard, Challenge, Leaderboard, Profile, Login, and Register are not attached. No usable browser automation environment was available for this QA run, and no Supabase configuration was available for authenticated views. The comparisons below are a source-to-concept review, not a rendered visual sign-off.
 
 ## Concept-to-source comparisons
 
@@ -24,13 +24,13 @@ The required desktop and 390px captures for Landing, Dashboard, Challenge, Leade
 
 | View | Desktop | 390px | Result |
 | --- | --- | --- | --- |
-| Landing | Not captured | Not captured | BLOCKED by unavailable browser/runtime response |
-| Login | Not captured | Not captured | BLOCKED by unavailable browser/runtime response |
-| Register | Not captured | Not captured | BLOCKED by unavailable browser/runtime response |
-| Dashboard | Not captured | Not captured | BLOCKED by missing authenticated Supabase session and browser/runtime response |
-| Challenge | Not captured | Not captured | BLOCKED by missing authenticated Supabase session and browser/runtime response |
-| Leaderboard | Not captured | Not captured | BLOCKED by missing authenticated Supabase session and browser/runtime response |
-| Profile | Not captured | Not captured | BLOCKED by missing authenticated Supabase session and browser/runtime response |
+| Landing | Not captured | Not captured | BLOCKED by unavailable browser environment |
+| Login | Not captured | Not captured | BLOCKED by unavailable browser environment |
+| Register | Not captured | Not captured | BLOCKED by unavailable browser environment |
+| Dashboard | Not captured | Not captured | BLOCKED by unavailable browser environment and missing authenticated Supabase session |
+| Challenge | Not captured | Not captured | BLOCKED by unavailable browser environment and missing authenticated Supabase session |
+| Leaderboard | Not captured | Not captured | BLOCKED by unavailable browser environment and missing authenticated Supabase session |
+| Profile | Not captured | Not captured | BLOCKED by unavailable browser environment and missing authenticated Supabase session |
 
 ## Intentional scope deferrals
 
