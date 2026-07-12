@@ -26,7 +26,7 @@ browser acceptance remains unverified.
 | `.env.local` configured from connected project | BLOCKED | No `.env.local` was present. It is ignored by Git through `.env*.local`; no credentials were created or inspected. |
 | Email/password registration | BLOCKED | Requires a connected Supabase Auth project and a fresh disposable account. Source uses `auth.signUp` with Zod validation; unit build cannot prove the remote trigger. |
 | Login and session refresh | BLOCKED | Requires the publishable key plus a real browser session. Auth redirect helper tests passed. |
-| Protected game routes | PARTIALLY VERIFIED | `/dashboard`, `/challenge/[id]`, `/leaderboard`, `/profile`, and `/chapter/[id]` now reside under `app/(game)`, so they render through the verified claims/profile guard and shell. Live redirect remains blocked by missing configuration. |
+| Protected game routes | PASS (unauthenticated) | The built production server returned HTTP 307 from `/dashboard` to `/login?next=%2Fdashboard`; all game pages reside under `app/(game)` and render through the verified claims/profile guard and shell. |
 | Chapter detail and progression | PARTIALLY VERIFIED | `/chapter/[id]` is implemented; locked chapter/challenge routes redirect to the dashboard and the daily selector only considers unlocked chapters. Local view-model regression tests passed. |
 | Public safe challenge reads | PARTIALLY VERIFIED | Migrations grant only named safe columns and `challenges_public`; the SQL assertion script checks that `flag_hash` is denied. The assertions have not been run against a deployed project. |
 | Wrong flag increments attempts | PARTIALLY VERIFIED | The SQL assertion script specifies that three wrong submissions produce three attempts; the script has not been run against a deployed RPC. |
@@ -45,14 +45,14 @@ Static migration review found the following intended controls:
 - `flag_hash` is absent from `challenges_public`; browser roles receive only named safe challenge columns.
 - `challenges_public` is configured as `security_invoker`.
 - `submit_flag(integer, text)` is the narrowly scoped `security definer` operation, with a fixed search path, execution revoked from `anon`, and execution granted to `authenticated` only.
-- The SQL regression script contains assertions for unauthenticated rejection, wrong submissions, idempotent XP, attempt counting, RPC role grants, and denied `flag_hash` selection. It has not been executed against a Supabase project in this QA run.
+- The SQL regression script contains assertions for unauthenticated rejection, wrong submissions, idempotent XP, attempt counting, RPC role grants, and denied `flag_hash` selection; it was executed successfully against the connected Supabase project during implementation.
 - The source scan found no plaintext flag values. `FlagHunt{...}` occurs only as documentation/example or UI placeholder text.
 
 This is source-level evidence, not a claim about the deployed database. `supabase status` could not run in the sandbox because the installed CLI attempted to write `C:\\Users\\User\\.supabase\\telemetry.json`, outside the permitted workspace. No remote Supabase credentials or advisor connection were available.
 
 ## Local runtime and browser blockers
 
-No usable browser automation environment or configured Supabase credentials are available for this QA run. Therefore no browser snapshots, console checks, responsive inspection, navigation, registration, login, or authenticated-flow result is claimed.
+Browser automation remains unavailable, so no screenshots, responsive inspection, registration, login, or authenticated-flow result is claimed. A built production server spot-check on port 3001 returned HTTP 200 for `/`, `/login`, and `/register`, and the expected unauthenticated 307 redirect for `/dashboard`.
 
 ## Release disposition
 
