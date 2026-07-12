@@ -22,6 +22,7 @@ declare
   profile_row public.profiles%rowtype;
   progress_was_solved boolean;
   is_correct boolean;
+  previous_chapter_id integer;
   awarded_xp integer := 0;
   badges_awarded jsonb := '[]'::jsonb;
 begin
@@ -44,6 +45,28 @@ begin
 
   if not found then
     raise exception 'ไม่พบโจทย์ที่เลือก';
+  end if;
+
+  select previous_chapter.id into previous_chapter_id
+  from public.chapters as previous_chapter
+  join public.chapters as current_chapter on current_chapter.id = challenge_row.chapter_id
+  where previous_chapter.order_num < current_chapter.order_num
+  order by previous_chapter.order_num desc
+  limit 1;
+
+  if previous_chapter_id is not null and exists (
+    select 1
+    from public.challenges as prerequisite_challenge
+    where prerequisite_challenge.chapter_id = previous_chapter_id
+      and not exists (
+        select 1
+        from public.user_progress as prerequisite_progress
+        where prerequisite_progress.user_id = current_user_id
+          and prerequisite_progress.challenge_id = prerequisite_challenge.id
+          and prerequisite_progress.is_solved
+      )
+  ) then
+    raise exception 'กรุณาทำภารกิจในบทก่อนหน้าให้ครบก่อน';
   end if;
 
   is_correct := p_submitted_flag_hash is not null

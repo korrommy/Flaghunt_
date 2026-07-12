@@ -16,21 +16,39 @@ export type QueryResult<T> = { status: "ready"; data: T } | { status: "unavailab
 const unavailable = <T>(reason: QueryUnavailableReason): QueryResult<T> => ({ status: "unavailable", reason });
 const sortChallenges = (left: PublicChallenge, right: PublicChallenge): number => left.chapter_id - right.chapter_id || left.order_num - right.order_num || left.id - right.id;
 
+export const isChapterUnlocked = (
+  chapterId: number,
+  chapters: Chapter[],
+  challenges: PublicChallenge[],
+  progress: Progress[],
+): boolean => {
+  const orderedChapters = [...chapters].sort((left, right) => left.order_num - right.order_num);
+  const chapterIndex = orderedChapters.findIndex((chapter) => chapter.id === chapterId);
+  if (chapterIndex < 0) return false;
+  if (chapterIndex === 0) return true;
+
+  const previousChapter = orderedChapters[chapterIndex - 1];
+  const solvedIds = new Set(progress.filter((item) => item.is_solved).map((item) => item.challenge_id));
+  const previousChallenges = challenges.filter((challenge) => challenge.chapter_id === previousChapter.id);
+  return previousChallenges.length > 0 && previousChallenges.every((challenge) => solvedIds.has(challenge.id));
+};
+
 export const buildDashboardView = (data: GameQueryData, today: Date = new Date()): DashboardView => {
   const solvedIds = new Set(data.progress.filter((item) => item.is_solved).map((item) => item.challenge_id));
-  const chapters = [...data.chapters].sort((a, b) => a.order_num - b.order_num).map((chapter, index, all) => {
+  const orderedChapters = [...data.chapters].sort((a, b) => a.order_num - b.order_num);
+  const chapters = orderedChapters.map((chapter) => {
     const challenges = data.challenges.filter((challenge) => challenge.chapter_id === chapter.id);
     const solvedCount = challenges.filter((challenge) => solvedIds.has(challenge.id)).length;
-    const previous = all[index - 1];
-    const previousChallenges = previous ? data.challenges.filter((challenge) => challenge.chapter_id === previous.id) : [];
-    const previousComplete = previousChallenges.length > 0 && previousChallenges.every((challenge) => solvedIds.has(challenge.id));
-    return { ...chapter, solvedCount, totalChallenges: challenges.length, isComplete: challenges.length > 0 && solvedCount === challenges.length, isLocked: index > 0 && !previousComplete };
+    return { ...chapter, solvedCount, totalChallenges: challenges.length, isComplete: challenges.length > 0 && solvedCount === challenges.length, isLocked: !isChapterUnlocked(chapter.id, orderedChapters, data.challenges, data.progress) };
   });
   const available = data.challenges.filter((challenge) => {
     const chapter = chapters.find((item) => item.id === challenge.chapter_id);
     return chapter && !chapter.isLocked && !solvedIds.has(challenge.id);
   }).sort(sortChallenges);
-  const dailyCandidates = [...data.challenges].sort(sortChallenges);
+  const dailyCandidates = [...data.challenges].filter((challenge) => {
+    const chapter = chapters.find((item) => item.id === challenge.chapter_id);
+    return chapter && !chapter.isLocked;
+  }).sort(sortChallenges);
   const utcDay = Math.floor(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()) / 86_400_000);
   const dailyChallenge = dailyCandidates.length ? dailyCandidates[utcDay % dailyCandidates.length] : null;
   const titles = new Map(data.challenges.map((challenge) => [challenge.id, challenge.title]));

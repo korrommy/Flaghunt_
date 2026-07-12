@@ -32,6 +32,8 @@ declare
   test_user_id uuid := gen_random_uuid();
   challenge_to_submit integer;
   challenge_hash text;
+  locked_challenge_id integer;
+  locked_challenge_hash text;
   result record;
 begin
   insert into auth.users (
@@ -54,6 +56,13 @@ begin
     raise exception 'Assertion failed: seed challenge is missing';
   end if;
 
+  select challenge.id, challenge.flag_hash into locked_challenge_id, locked_challenge_hash
+  from public.challenges as challenge
+  join public.chapters as chapter on chapter.id = challenge.chapter_id
+  where chapter.order_num > (select min(order_num) from public.chapters)
+  order by chapter.order_num, challenge.order_num
+  limit 1;
+
   perform set_config('request.jwt.claim.sub', '', true);
   begin
     perform public.submit_flag(challenge_to_submit, challenge_hash);
@@ -65,6 +74,15 @@ begin
   end;
 
   perform set_config('request.jwt.claim.sub', test_user_id::text, true);
+  begin
+    perform public.submit_flag(locked_challenge_id, locked_challenge_hash);
+    raise exception 'Assertion failed: locked chapter submission did not fail';
+  exception when others then
+    if sqlerrm not like '%กรุณาทำภารกิจในบทก่อนหน้าให้ครบก่อน%' then
+      raise;
+    end if;
+  end;
+
   select * into result from public.submit_flag(challenge_to_submit, repeat('0', 64));
   if result.correct or result.already_solved or result.xp_earned <> 0 then
     raise exception 'Assertion failed: wrong hash response was unexpected';

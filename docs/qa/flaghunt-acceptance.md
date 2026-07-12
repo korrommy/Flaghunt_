@@ -1,7 +1,8 @@
 # FlagHunt acceptance QA
 
 Date: 2026-07-11 (Asia/Bangkok)  
-Scope: Task 8 end-to-end, security, and build verification.
+Scope: Task 8 end-to-end, security, and build verification. This document has
+not been re-certified after the final route/progression changes below.
 
 ## Evidence executed
 
@@ -9,12 +10,15 @@ Scope: Task 8 end-to-end, security, and build verification.
 | --- | --- | --- |
 | TypeScript | PASS | `npm run type-check` exited 0 (`tsc --noEmit`). |
 | Production build | PASS | `npm run build` exited 0 using Next.js 14.2.5. |
-| Unit suite | PASS | `npm test`: 17 files and 48 tests passed. |
+| Unit suite | PASS | `npm test`: 18 files and 51 tests passed after the final progression additions. |
 | Auth redirect helpers | PASS | `lib/auth/safe-next.test.ts`: 5 tests passed. |
 | Submit-flag HTTP behaviour | PASS | `app/api/submit-flag/route.test.ts`: 6 tests passed. |
 | Hint/writeup unavailable endpoints | PASS | 3 tests each for `app/api/hint` and `app/api/writeup`. |
 | Controlled terminal | PASS | `lib/terminal-scripts.test.ts`: 4 tests and `TerminalEmulator.test.ts`: 1 test passed. |
 | Shell/navigation components | PASS | Sidebar (4 tests), leaderboard, XP bar, flag input, and landing console component tests passed. |
+| Final progression regression tests | PASS (local) | `npm test -- lib/queries/game.test.ts supabase/migrations/progression.test.ts`: 2 files and 9 tests passed. |
+| Final type-check/build | BLOCKED | The workspace's pre-existing `.next` cache and `tsconfig.tsbuildinfo` are owned outside the current sandbox. They cannot be removed or rewritten, so Next route types still reference the pre-move route paths. |
+| Source TypeScript | PASS (local) | `npx tsc --noEmit --project tsconfig.verify.json` exited 0 with a temporary config that excludes the inaccessible stale `.next` cache. |
 
 ## Acceptance matrix
 
@@ -23,9 +27,11 @@ Scope: Task 8 end-to-end, security, and build verification.
 | `.env.local` configured from connected project | BLOCKED | No `.env.local` was present. It is ignored by Git through `.env*.local`; no credentials were created or inspected. |
 | Email/password registration | BLOCKED | Requires a connected Supabase Auth project and a fresh disposable account. Source uses `auth.signUp` with Zod validation; unit build cannot prove the remote trigger. |
 | Login and session refresh | BLOCKED | Requires the publishable key plus a real browser session. Auth redirect helper tests passed. |
-| Protected game routes | PARTIALLY VERIFIED | Game layout redirects when no claims/profile and middleware delegates session refresh; live redirect could not be exercised without configuration. |
+| Protected game routes | PARTIALLY VERIFIED | `/dashboard`, `/challenge/[id]`, `/leaderboard`, `/profile`, and `/chapter/[id]` now reside under `app/(game)`, so they render through the verified claims/profile guard and shell. Live redirect remains blocked by missing configuration. |
+| Chapter detail and progression | PARTIALLY VERIFIED | `/chapter/[id]` is implemented; locked chapter/challenge routes redirect to the dashboard and the daily selector only considers unlocked chapters. Local view-model regression tests passed. |
 | Public safe challenge reads | PARTIALLY VERIFIED | Migration grants only named safe columns and `challenges_public`; SQL test asserts `flag_hash` is denied. Deployment-state confirmation is blocked. |
 | Wrong flag increments attempts | PARTIALLY VERIFIED | RPC SQL test explicitly asserts three submissions produce three attempts; live RPC run is blocked. |
+| Server chapter progression | PARTIALLY VERIFIED | Canonical RPC migration and corrective migration reject a submission when the immediately preceding chapter has unsolved challenges; SQL regression script covers the rejection. Applying/running it remotely is blocked. |
 | Correct flag awards XP once | PARTIALLY VERIFIED | RPC SQL test asserts initial correct result earns XP and repeat result earns zero; route tests pass. |
 | Locked/unlocked badge transition | BLOCKED | The RPC implements conditional award and profile renders `BadgeGrid`, but a seeded remote database and account are required for observation. |
 | Global ranking | PARTIALLY VERIFIED | Query/component unit tests pass; live ordering requires seeded remote data. Friends/country are intentionally out of scope. |
@@ -48,6 +54,13 @@ This is source-level evidence, not a claim about the deployed database. `supabas
 ## Local runtime and browser blockers
 
 `npm run dev` started and announced `http://localhost:3000`, but `curl.exe -I --max-time 15 http://localhost:3000/` timed out with zero response bytes. `agent-browser` was not installed/available on PATH; `npx --no-install agent-browser --help` emitted no usable executable output. Therefore no browser snapshots, console checks, responsive inspection, navigation, or authenticated flow were claimed.
+
+## Final-change caveat
+
+The TypeScript and production-build results above predate the final route move
+and progression migration. The full unit suite is fresh; TypeScript, production
+build, SQL execution, and browser checks must be rerun in a writable workspace
+with a configured Supabase project.
 
 ## Release disposition
 

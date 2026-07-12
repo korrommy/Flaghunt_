@@ -93,18 +93,16 @@ declare
   suffix integer := 0;
 begin
   base_username := split_part(new.email, '@', 1);
-  final_username := base_username;
-
-  -- กัน username ซ้ำ โดยต่อท้ายด้วยตัวเลข
-  while exists (select 1 from public.profiles where username = final_username) loop
-    suffix := suffix + 1;
-    final_username := base_username || suffix::text;
+  loop
+    final_username := base_username || case when suffix = 0 then '' else suffix::text end;
+    begin
+      insert into public.profiles (id, username, display_name)
+      values (new.id, final_username, base_username);
+      return new;
+    exception when unique_violation then
+      suffix := suffix + 1;
+    end;
   end loop;
-
-  insert into public.profiles (id, username, display_name)
-  values (new.id, final_username, base_username);
-
-  return new;
 end;
 $$;
 

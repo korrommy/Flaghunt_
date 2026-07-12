@@ -64,6 +64,12 @@ describe("game view mapping", () => {
     expect(afterSolve.dailyChallenge?.id).toBe(beforeSolve.dailyChallenge?.id);
   });
 
+  it("does not offer a daily quest from a locked future chapter", () => {
+    const dashboard = buildDashboardView(baseData, new Date("1970-01-03T12:00:00Z"));
+
+    expect(dashboard.dailyChallenge?.chapter_id).toBe(1);
+  });
+
   it("keeps a ranked learner below the requested leaderboard page", () => {
     const currentProfile = { id: "learner", username: "learner", display_name: "Learner", total_xp: 0, level: 1, created_at: "2026-01-01T00:00:00Z" };
     const page = buildLeaderboardPage(
