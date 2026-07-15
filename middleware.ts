@@ -1,3 +1,9 @@
-// TODO (ส่วนที่ 3): ป้องกัน route ที่ต้อง login (dashboard, challenge, profile)
-// + refresh Supabase session
-export {};
+import type { NextRequest } from "next/server";
+
+import { updateSession } from "@/lib/supabase/proxy";
+
+export const middleware = async (request: NextRequest) => updateSession(request);
+
+export const config = {
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)"],
+};

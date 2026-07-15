@@ -161,3 +161,10 @@
 - Coverage: Tasks 1–2 establish secure Supabase; 3 covers auth/shell; 4 covers dashboard/social/profile; 5–6 cover challenge/API; 7 covers Landing; 8 verifies the full flow.
 - No-placeholder scan: no deferred implementation is left unspecified; accepted deferrals are AI Mentor, friends, country, and global realtime feed.
 - Type consistency: client-facing challenges use `PublicChallenge`; only Task 2 accesses `flag_hash`; Task 6 is the only HTTP path for submission.
+
+## Task 5 regression report (2026-07-11)
+
+- Root cause: normal JavaScript object maps exposed inherited prototype members to terminal lookup paths. `cat toString` attempted to split a function, while inherited command names could be returned as function output.
+- Fix: terminal lookup now uses explicit own-property checks; the default and challenge-script maps use null prototypes. Inherited names fall through to the existing Thai missing-file/unknown-command responses.
+- Coverage: regression tests protect `toString` and `constructor` for both `cat` and challenge command dispatch, while the existing known-command test confirms the static allowlist behavior is unchanged.
+- Scope: no Task 6 API route or client wiring was changed.

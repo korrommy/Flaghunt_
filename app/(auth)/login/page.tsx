@@ -1,4 +1,6 @@
-// TODO (ส่วนที่ 3): Login page
+import { Suspense } from "react";
+import { LoginForm } from "./LoginForm";
+
 export default function LoginPage() {
-  return null;
+  return <Suspense><LoginForm /></Suspense>;
 }

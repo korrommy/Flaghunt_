@@ -1,4 +1,6 @@
-// TODO (ส่วนที่ 3): Register page
+import { Suspense } from "react";
+import { RegisterForm } from "./RegisterForm";
+
 export default function RegisterPage() {
-  return null;
+  return <Suspense><RegisterForm /></Suspense>;
 }
